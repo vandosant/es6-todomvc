@@ -1,6 +1,4 @@
-'use strict'
-
-module.exports = {qs, qsa, log, $on, $delegate, $parent, remove, leftPad}
+export {qs, qsa, log, $on, $delegate, $parent, remove, leftPad}
 
 // Get element(s) by CSS selector:
 function qs(selector, scope) {
@@ -11,9 +9,9 @@ function qsa(selector, scope) {
   return (scope || document).querySelectorAll(selector)
 }
 
-function log() {
+function log(...args) {
   if (window.console && window.console.log) {
-    window.console.log.apply(window.console, arguments) // eslint-disable-line
+    window.console.log(...args)
   }
 }
 
@@ -25,6 +23,10 @@ function $on(target, type, callback, useCapture) {
 // Attach a handler to event for all elements that match the selector,
 // now or in the future, based on a root element
 function $delegate(target, selector, type, handler) {
+  // https://developer.mozilla.org/en-US/docs/Web/Events/blur
+  var useCapture = type === 'blur' || type === 'focus'
+  $on(target, type, dispatchEvent, useCapture)
+
   function dispatchEvent(event) {
     var targetElement = event.target
     var potentialElements = qsa(selector, target)
@@ -34,18 +36,13 @@ function $delegate(target, selector, type, handler) {
       handler.call(targetElement, event)
     }
   }
-
-  // https://developer.mozilla.org/en-US/docs/Web/Events/blur
-  var useCapture = type === 'blur' || type === 'focus'
-
-  $on(target, type, dispatchEvent, useCapture)
 }
 
 // Find the element's parent with the given tag name:
 // $parent(qs('a'), 'div');
 function $parent(element, tagName) {
   if (!element.parentNode) {
-    return
+    return undefined
   }
   if (element.parentNode.tagName.toLowerCase() === tagName.toLowerCase()) {
     return element.parentNode
